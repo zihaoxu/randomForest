@@ -1,16 +1,16 @@
-Package: randomForestBLB
+Package: randomForest
 Title: The BLB implementation of randomForest that allows faster execution speed
 Version: 1.0-0
 Date: 2017-05-31
 Depends: R (>= 2.5.0), stats
-Suggests: ...
+Suggests: RColorBrewer, MASS
 Author: Zihao Xu & Dr. Johanna Hardin
 Description: Bags of little bootstraps implementation of Random Forest algorithm to 
             allow for parallel execution 
 Maintainer: Zihao Xu <zihao.xu@pomona.edu>
-License: ...
+License: GPL (>= 2)
 URL: https://www.stat.berkeley.edu/~breiman/RandomForests/
 NeedsCompilation: yes
-Packaged: ....
-Repository: ...
-Date/Publication: ...
+Packaged: 2015-10-06 18:28:23 UTC; Liawand
+Repository: CRAN
+Date/Publication: 2015-10-07 08:38:34
