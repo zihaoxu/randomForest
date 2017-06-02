@@ -282,3 +282,118 @@ void F77_NAME(unpack)(double *pack, int *nBits, int *bits) {
 	unpack(*pack, *nBits, bits);
 }
 
+
+/* rmultinom funciton: */
+// @ param n:       sum of the M_i
+// @ param K:       length of the probs vector
+// @ param probs:   vector of probs associated with each observation
+// @ param rN:      the resulting vector of M_i
+
+void rmultinom(int n, int K, double* prob, int* rN)
+  /* `Return' vector  rN[1:K] {K := length(prob)}
+  *  where rN[j] ~ Bin(n, prob[j]) ,  sum_j rN[j] == n,  sum_j prob[j] == 1,
+  */
+{
+  int k;
+  double pp;
+  double p_tot = 0.;
+  /* This calculation is sensitive to exact values, so we try to
+  ensure that the calculations are as accurate as possible
+  so different platforms are more likely to give the same
+  result. */
+  
+  //#ifdef MATHLIB_STANDALONE
+  //    if (K < 1) { ML_ERROR(ME_DOMAIN, "rmultinom"); return;}
+  //    if (n < 0)  ML_ERR_ret_NAN(0);
+  //#else
+  //    if (K == NA_INTEGER || K < 1) { ML_ERROR(ME_DOMAIN, "rmultinom"); return;}
+  //    if (n == NA_INTEGER || n < 0)  ML_ERR_ret_NAN(0);
+  //#endif
+  
+  /* Note: prob[K] is only used here for checking  sum_k prob[k] = 1 ;
+  *       Could make loop one shorter and drop that check !
+  */
+  for(k = 0; k < K; k++) {
+    pp = prob[k];
+    if (pp < 0. || pp > 1.) return;
+    p_tot += pp;
+    rN[k] = 0;
+  }
+  //    if(fabs((double)(p_tot - 1.)) > 1e-7)
+  //        MATHLIB_ERROR(_("rbinom: probability sum should be 1, but is %g"),
+  //                      (double) p_tot);
+  if (n == 0) return;
+  if (K == 1 && p_tot == 0.) return;/* trivial border case: do as rbinom */
+  
+  /* Generate the first K-1 obs. via binomials */
+  
+  for(k = 0; k < K-1; k++) { /* (p_tot, n) are for "remaining binomial" */
+  if(prob[k]) {
+    pp = (double)(prob[k] / p_tot);
+    // printf("[%d] %.17f\n", k+1, pp);
+    rN[k] = ((pp < 1.) ? rbinom(pp, n) :
+               /*>= 1; > 1 happens because of rounding */
+               n);
+    n -= rN[k];
+  }
+  else rN[k] = 0;
+  if(n <= 0) /* we have all*/ return;
+  p_tot -= prob[k]; /* i.e. = sum(prob[(k+1):K]) */
+  }
+  rN[K-1] = n;
+  return;
+}
+
+
+
+int rbinom(double p, int n)
+{
+  int    bin_value;             // Computed Binomial value to be returned
+  int    i;                     // Loop counter
+  
+  // Generate a binomial random variate
+  bin_value = 0;
+  for (i=0; i<n; i++)
+    if (rand_val(0) < p) bin_value++;
+    
+    return(bin_value);
+}
+
+//=========================================================================
+//= Multiplicative LCG for generating uniform(0.0, 1.0) random numbers    =
+//=   - x_n = 7^5*x_(n-1)mod(2^31 - 1)                                    =
+//=   - With x seeded to 1 the 10000th x value should be 1043618065       =
+//=   - From R. Jain, "The Art of Computer Systems Performance Analysis," =
+//=     John Wiley & Sons, 1991. (Page 443, Figure 26.2)                  =
+//=========================================================================
+double rand_val(int seed)
+{
+  const long  a =      16807;  // Multiplier
+  const long  m = 2147483647;  // Modulus
+  const long  q =     127773;  // m div a
+  const long  r =       2836;  // m mod a
+  static long x;               // Random int value
+  long        x_div_q;         // x divided by q
+  long        x_mod_q;         // x modulo q
+  long        x_new;           // New x value
+  
+  // Set the seed if argument is non-zero and then return zero
+  if (seed > 0)
+  {
+    x = seed;
+    return(0.0);
+  }
+  
+  // RNG using integer arithmetic
+  x_div_q = x / q;
+  x_mod_q = x % q;
+  x_new = (a * x_mod_q) - (r * x_div_q);
+  if (x_new > 0)
+    x = x_new;
+  else
+    x = x_new + m;
+  
+  // Return a random value between 0.0 and 1.0
+  return((double) x / m);
+}
+

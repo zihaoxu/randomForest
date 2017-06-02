@@ -96,6 +96,11 @@ extern void F77_NAME(buildtree)(int *a, int *b, int *cl, int *cat,
 				double *, double *, double *,
 				int *, int *, int *); 
 
+/* Define new functions:*/
+double rand_val(int seed);
+int rbinom(double p, int n);
+void rmultinom(int n, int K, double* prob, int* rN);
+
 /* maximum number of categories allowed in categorical predictors */
 #define MAX_CAT 53
 
