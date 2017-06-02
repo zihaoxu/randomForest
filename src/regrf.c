@@ -52,8 +52,7 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
     double errts = 0.0, averrb, meanY, meanYts, varY, varYts, r, xrand,
 	errb = 0.0, resid=0.0, ooberr, ooberrperm, delta, *resOOB;
 
-    // double *yb, *xtmp, *xb, *ytr, *ytree, *tgini;
-    double *ycoef, *xtmp, *xcoef, *ytr, *ytree, *tgini;
+    double *yb, *xtmp, *xb, *ytr, *ytree, *tgini, *mCoef;
 
     int k, m, mr, n, nOOB, j, jout, idx, ntest, last, ktmp, nPerm,
         nsample, mdim, keepF, keepInbag;
@@ -72,10 +71,9 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
 
     if (*jprint == 0) *jprint = *nTree + 1;
 
-    //yb         = (double *) S_alloc(*sampsize, sizeof(double));
-    //xb         = (double *) S_alloc(mdim * *sampsize, sizeof(double));
-    ycoef      = (double *) S_alloc(nsample, sizeof(int));
-    xcoef      = (double *) S_alloc(mdim * nsample, sizeof(int));
+    yb         = (double *) S_alloc(*sampsize, sizeof(double));
+    xb         = (double *) S_alloc(mdim * *sampsize, sizeof(double));
+    mCoef      = (double *) S_alloc(nsample, sizeof(int));
     ytr        = (double *) S_alloc(nsample, sizeof(double));
     xtmp       = (double *) S_alloc(nsample, sizeof(double));
     resOOB     = (double *) S_alloc(nsample, sizeof(double));
@@ -155,10 +153,10 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
 				k = xrand * nsample;
 				in[k] += 1;
 				// yb[n] = y[k];
-				ycoef[n] = y[k];
+				yb[n] = y[k];
 				for(m = 0; m < mdim; ++m) {
 					// xb[m + n * mdim] = x[m + k * mdim];
-					xcoef[m + n * mdim] = x[m + k * mdim];
+					xb[m + n * mdim] = x[m + k * mdim];
 				}
 			}
 		} else { /* sampling w/o replacement */
@@ -171,10 +169,10 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
 				last--;
 				in[k] += 1;
 				// yb[n] = y[k];
-				ycoef[n] = y[k];
+				yb[n] = y[k];
 				for(m = 0; m < mdim; ++m) {
 					// xb[m + n * mdim] = x[m + k * mdim];
-					xcoef[m + n * mdim] = x[m + k * mdim];
+					xb[m + n * mdim] = x[m + k * mdim];
 				}
 			}
 		}
@@ -186,7 +184,7 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
                 upper + idx, avnode + idx, nodestatus + idx, *nrnodes,
                 treeSize + j, *nthsize, *mtry, mbest + idx, cat, tgini,
                 varUsed);*/
-		regTree(xcoef, ycoef, mdim, *sampsize, lDaughter + idx, rDaughter + idx,
+		regTree(xb, yb, mdim, *sampsize, lDaughter + idx, rDaughter + idx,
           upper + idx, avnode + idx, nodestatus + idx, *nrnodes,
           treeSize + j, *nthsize, *mtry, mbest + idx, cat, tgini,
           varUsed);
