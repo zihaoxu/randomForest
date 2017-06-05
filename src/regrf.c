@@ -66,7 +66,7 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
     
     yb         = (double *) S_alloc(*sampsize, sizeof(double));
     xb         = (double *) S_alloc(mdim * *sampsize, sizeof(double));
-    multiCoef  = (double *) S_alloc(*sampsize, sizeof(double));
+    multiCoef  = (int *) S_alloc(*sampsize, sizeof(int));
     ytr        = (double *) S_alloc(nsample, sizeof(double));
     xtmp       = (double *) S_alloc(nsample, sizeof(double));
     resOOB     = (double *) S_alloc(nsample, sizeof(double));
