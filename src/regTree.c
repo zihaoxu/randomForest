@@ -52,6 +52,7 @@ void regTree(double *x, double *y, int mdim, int nsample, int *lDaughter,
     nodestatus[0] = NODE_TOSPLIT;
     
     /* compute mean and sum of squares for Y */
+    /* task: plug in Mi and modify value of nsample to b */
     av = 0.0;
     ss = 0.0;
     for (i = 0; i < nsample; ++i) {
@@ -72,6 +73,7 @@ void regTree(double *x, double *y, int mdim, int nsample, int *lDaughter,
 #endif
         
         /* initialize for next call to findbestsplit */
+        /* task: need to look into how nodestart and nodepop are calculated */
         ndstart = nodestart[k];
         ndend = ndstart + nodepop[k] - 1;
         nodecnt = nodepop[k];
@@ -111,6 +113,7 @@ void regTree(double *x, double *y, int mdim, int nsample, int *lDaughter,
         nodestart[ncur + 2] = ndendl + 1;
         
         /* compute mean and sum of squares for the left daughter node */
+        /* task: need to recalculated */
         av = 0.0;
         ss = 0.0;
         for (j = ndstart; j <= ndendl; ++j) {
@@ -126,6 +129,7 @@ void regTree(double *x, double *y, int mdim, int nsample, int *lDaughter,
         }
         
         /* compute mean and sum of squares for the right daughter node */
+        /* task: need to recalculated */
         av = 0.0;
         ss = 0.0;
         for (j = ndendl + 1; j <= ndend; ++j) {
@@ -173,6 +177,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
     double *xt, *ut, *v, *yl, sumcat[MAX_CAT], avcat[MAX_CAT], tavcat[MAX_CAT], ubestt;
     double crit, critmax, critvar, suml, sumr, d, critParent;
     
+    /* task: look into value of "nsample" */
     ut = (double *) Calloc(nsample, double);
     xt = (double *) Calloc(nsample, double);
     v  = (double *) Calloc(nsample, double);
@@ -230,6 +235,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
         if (v[ndstart] >= v[ndend]) continue;
         /* ncase(n)=case number of v nth from bottom */
         /* Start from the right and search to the left. */
+        /* task: need to verify whether the introduction of Mi will change the following calculation */
         critParent = sumnode * sumnode / nodecnt;
         suml = 0.0;
         sumr = sumnode;
@@ -244,6 +250,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
             npopl++;
             npopr--;
             if (v[j] < v[j+1]) {
+                /* task: suml, sumr, calcualted need to be changed??? */
                 crit = (suml * suml / npopl) + (sumr * sumr / npopr) -
                 critParent;
                 if (crit > critvar) {
