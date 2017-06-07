@@ -25,7 +25,7 @@
 #include <R.h>
 #include "rf.h"
 
-void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *lDaughter,
+void regTree(double *x, double *y, int *multiCoef, int mdim, int nresample, int *lDaughter,
              int *rDaughter,
              double *upper, double *avnode, int *nodestatus, int nrnodes,
              int *treeSize, int nthsize, int mtry, int *mbest, int *cat,
@@ -43,19 +43,19 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
     zeroInt(nodepop, nrnodes);
     zeroDouble(avnode, nrnodes);
     
-    jdex = (int *) Calloc(nsample, int);
-    for (i = 1; i <= nsample; ++i) jdex[i-1] = i;
+    jdex = (int *) Calloc(nresample, int);
+    for (i = 1; i <= nresample; ++i) jdex[i-1] = i;
     
     ncur = 0;
     nodestart[0] = 0;
-    nodepop[0] = nsample;
+    nodepop[0] = nresample;
     nodestatus[0] = NODE_TOSPLIT;
     
     /* compute mean and sum of squares for Y */
-    /* task: plug in Mi and modify value of nsample to b */
+    /* task: plug in Mi and modify value of nresample to b */
     av = 0.0;
     ss = 0.0;
-    for (i = 0; i < nsample; ++i) {
+    for (i = 0; i < nresample; ++i) {
         d = y[jdex[i] - 1];
         ss += i * (av - d) * (av - d) / (i + 1);
         av = (i * av + d) / (i + 1);
@@ -86,7 +86,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
                 ndstart, ndend, jstat, decsplit);
 #endif
         
-        findBestSplit(x, jdex, y, mdim, nsample, ndstart, ndend, &msplit,
+        findBestSplit(x, jdex, y, mdim, nresample, ndstart, ndend, &msplit,
                       &decsplit, &ubest, &ndendl, &jstat, mtry, sumnode,
                       nodecnt, cat);
 #ifdef RF_DEBUG
@@ -168,7 +168,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
 }
 
 /*--------------------------------------------------------------*/
-void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
+void findBestSplit(double *x, int *jdex, double *y, int mdim, int nresample,
                    int ndstart, int ndend, int *msplit, double *decsplit,
                    double *ubest, int *ndendl, int *jstat, int mtry,
                    double sumnode, int nodecnt, int *cat) {
@@ -177,13 +177,13 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
     double *xt, *ut, *v, *yl, sumcat[MAX_CAT], avcat[MAX_CAT], tavcat[MAX_CAT], ubestt;
     double crit, critmax, critvar, suml, sumr, d, critParent;
     
-    /* task: look into value of "nsample" */
-    ut = (double *) Calloc(nsample, double);
-    xt = (double *) Calloc(nsample, double);
-    v  = (double *) Calloc(nsample, double);
-    yl = (double *) Calloc(nsample, double);
+    /* task: look into value of "nresample" */
+    ut = (double *) Calloc(nresample, double);
+    xt = (double *) Calloc(nresample, double);
+    v  = (double *) Calloc(nresample, double);
+    yl = (double *) Calloc(nresample, double);
     mind  = (int *) Calloc(mdim, int);
-    ncase = (int *) Calloc(nsample, int);
+    ncase = (int *) Calloc(nresample, int);
     zeroDouble(avcat, MAX_CAT);
     zeroDouble(tavcat, MAX_CAT);
     
@@ -223,14 +223,14 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
                 avcat[j] = ncat[j] ? sumcat[j] / ncat[j] : 0.0;
             }
             /* Make the category mean the `pseudo' X data. */
-            for (j = 0; j < nsample; ++j) {
+            for (j = 0; j < nresample; ++j) {
                 xt[j] = avcat[(int) x[kv + (jdex[j] - 1) * mdim] - 1];
                 yl[j] = y[jdex[j] - 1];
             }
         }
         /* copy the x data in this node. */
         for (j = ndstart; j <= ndend; ++j) v[j] = xt[j];
-        for (j = 1; j <= nsample; ++j) ncase[j - 1] = j;
+        for (j = 1; j <= nresample; ++j) ncase[j - 1] = j;
         R_qsort_I(v, ncase, ndstart + 1, ndend + 1);
         if (v[ndstart] >= v[ndend]) continue;
         /* ncase(n)=case number of v nth from bottom */
@@ -286,7 +286,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
         nr = *ndendl + 1;
         for (j = ndstart; j <= ndend; ++j) {
             if (ut[j] > *ubest) {
-                if (nr >= nsample) break;
+                if (nr >= nresample) break;
                 nr++;
                 ncase[nr - 1] = jdex[j];
             }
@@ -312,7 +312,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
 }
 
 /*====================================================================*/
-void predictRegTree(double *x, int nsample, int mdim,
+void predictRegTree(double *x, int nresample, int mdim,
                     int *lDaughter, int *rDaughter, int *nodestatus,
                     double *ypred, double *split, double *nodepred,
                     int *splitVar, int treeSize, int *cat, int maxcat,
@@ -338,7 +338,7 @@ void predictRegTree(double *x, int nsample, int mdim,
         }
     }
     
-    for (i = 0; i < nsample; ++i) {
+    for (i = 0; i < nresample; ++i) {
         k = 0;
         while (nodestatus[k] != NODE_TERMINAL) { /* go down the tree */
             m = splitVar[k] - 1;
