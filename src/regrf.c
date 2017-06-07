@@ -196,7 +196,7 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
             for (n = 0; n < nsample; ++n) inbag[n + j * nsample] = in[n];
         }
         /* grow the regression tree */
-        regTree(xb, yb, mdim, *sampsize * sampling_factor, lDaughter + idx, rDaughter + idx,
+        regTree(xb, yb, mdim, nsample * sampling_factor, lDaughter + idx, rDaughter + idx,
                 upper + idx, avnode + idx, nodestatus + idx, *nrnodes,
                 treeSize + j, *nthsize, *mtry, mbest + idx, cat, tgini,
                 varUsed);
