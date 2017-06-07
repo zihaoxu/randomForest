@@ -42,10 +42,11 @@ void classForest(int *mdim, int *ntest, int *nclass, int *maxcat,
                  int *jet, int *bestvar, int *nodexts, int *ndbigtree, 
                  int *keepPred, int *prox, double *proxmatrix, int *nodes);
 
-void regTree(double *x, double *y, int mdim, int nsample, 
-             int *lDaughter, int *rDaughter, double *upper, double *avnode, 
-             int *nodestatus, int nrnodes, int *treeSize, int nthsize, 
-             int mtry, int *mbest, int *cat, double *tgini, int *varUsed);
+void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *lDaughter,
+             int *rDaughter,
+             double *upper, double *avnode, int *nodestatus, int nrnodes,
+             int *treeSize, int nthsize, int mtry, int *mbest, int *cat,
+             double *tgini, int *varUsed);
 
 void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample, 
                    int ndstart, int ndend, int *msplit, double *decsplit, 

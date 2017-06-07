@@ -45,7 +45,7 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
     double errts = 0.0, averrb, meanY, meanYts, varY, varYts, r, xrand,
     errb = 0.0, resid=0.0, ooberr, ooberrperm, delta, *resOOB;
     
-    double *yb, *xtmp, *xb, *ytr, *ytree, *tgini, *prob;
+    double *xtmp, *ytr, *ytree, *tgini, *prob; //*yb,  *xb,
     
     int k, m, mr, n, nOOB, j, jout, idx, ntest, last, ktmp, nPerm,
     nsample, mdim, keepF, keepInbag, currentrow;
@@ -66,8 +66,8 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
     
     if (*jprint == 0) *jprint = *nTree + 1;
     
-    yb         = (double *) S_alloc(nsample * sampling_factor, sizeof(double));
-    xb         = (double *) S_alloc(nsample * mdim * sampling_factor, sizeof(double));
+    //yb         = (double *) S_alloc(nsample * sampling_factor, sizeof(double));
+    //xb         = (double *) S_alloc(nsample * mdim * sampling_factor, sizeof(double));
     multiCoef  = (int *)    S_alloc(nsample, sizeof(int));
     prob       = (double *) S_alloc(nsample, sizeof(double));
     ytr        = (double *) S_alloc(nsample, sizeof(double));
@@ -151,52 +151,34 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
         zeroInt(varUsed, mdim);
         /* Draw a random sample for growing a tree. */
         if (*replace) { /* sampling with replacement */
-            
-            
+            /* setting the seed to 1*/
             rand_val(1);
             currentrow = 0;
             rmultinomBLB(nsample * sampling_factor, nsample, prob, multiCoef);
             
-            for (n = 0; n < nsample; ++n) {
-                for (k = 0; k < multiCoef[n]; ++k){
-                    in[n] += 1;
-                    yb[currentrow] = y[n];
-                    for(m = 0; m < mdim; ++m) {
-                        xb[m + currentrow * mdim] = x[m + n * mdim];
-                    }
-                    currentrow += 1;
-                }
+/*
+ *          for (n = 0; n < nsample; ++n) {
+              for (k = 0; k < multiCoef[n]; ++k){
+                in[n] += 1;
+                yb[currentrow] = y[n];
+                  for(m = 0; m < mdim; ++m) {
+                    xb[m + currentrow * mdim] = x[m + n * mdim];
+                  }
+                currentrow += 1;
+              }
             }
-            
-//            for (n = 0; n < *sampsize; ++n) {
-//                xrand = unif_rand();
-//                k = xrand * nsample;
-//                in[k] += 1;
-//                yb[n] = y[k];
-//                for(m = 0; m < mdim; ++m) {
-//                    xb[m + n * mdim] = x[m + k * mdim];
-//                }
-//            }
+ */            
+
         } else { /* sampling w/o replacement */
-            for (n = 0; n < nsample; ++n) nind[n] = n;
-            last = nsample - 1;
-            for (n = 0; n < *sampsize; ++n) {
-                ktmp = (int) (unif_rand() * (last+1));
-                k = nind[ktmp];
-                swapInt(nind[ktmp], nind[last]);
-                last--;
-                in[k] += 1;
-                yb[n] = y[k];
-                for(m = 0; m < mdim; ++m) {
-                    xb[m + n * mdim] = x[m + k * mdim];
-                }
-            }
+            rand_val(1);
+            currentrow = 0;
+            rmultinomBLB(nsample * sampling_factor, nsample, prob, multiCoef);
         }
         if (keepInbag) {
             for (n = 0; n < nsample; ++n) inbag[n + j * nsample] = in[n];
         }
         /* grow the regression tree */
-        regTree(xb, yb, mdim, nsample * sampling_factor, lDaughter + idx, rDaughter + idx,
+        regTree(x, y, multiCoef, mdim, nsample * sampling_factor, lDaughter + idx, rDaughter + idx,
                 upper + idx, avnode + idx, nodestatus + idx, *nrnodes,
                 treeSize + j, *nthsize, *mtry, mbest + idx, cat, tgini,
                 varUsed);
