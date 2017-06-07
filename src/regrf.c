@@ -141,6 +141,8 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
     prob[n] = 1.0/nsample;
   }
   rand_val(1);
+  xb = x;
+  yb = y;
   
   /*************************************
   * Start the loop over trees.
@@ -182,8 +184,7 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
       for (n = 0; n < nsample; ++n) inbag[n + j * nsample] = in[n];
     }
     /* grow the regression tree */
-    *xb = *x;
-    *yb = *y;
+
     regTree(xb, yb, multiCoef, mdim, nsample, lDaughter + idx, rDaughter + idx,
             upper + idx, avnode + idx, nodestatus + idx, *nrnodes,
             treeSize + j, *nthsize, *mtry, mbest + idx, cat, tgini,

@@ -14,7 +14,7 @@ GNU General Public License for more details.
 #ifndef RF_H
 #define RF_H
 
-/* #define RF_DEBUG */
+#define RF_DEBUG
 
 /* test if the bit at position pos is turned on */
 #define isBitOn(x,pos) (((x) & (1 << (pos))) > 0)
