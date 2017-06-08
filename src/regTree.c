@@ -89,7 +89,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         ndend = ndstart + nodepop[k] - 1;
         nodecnt = nodepop[k];
         nodecntBLB = nodepopBLB[k];
-        sumnode = nodecnt * avnode[k];
+        sumnode = nodecntBLB * avnode[k];
         jstat = 0;
         decsplit = 0.0;
         
