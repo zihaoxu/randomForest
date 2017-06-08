@@ -59,19 +59,25 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
     ss = 0.0;
     currentCount = 0;
     for (i = 0; i < nsample; ++i) {
-        d = y[jdex[i] - 1] * multiCoef[jdex[i]-1];
-        ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[i]-1]);
-        av = (currentCount * av + d) / (currentCount + multiCoef[jdex[i]-1]);
-        currentCount += multiCoef[jdex[i]-1];
+        if (multiCoef[jdex[i]-1] != 0){
+            d = y[jdex[i] - 1] * multiCoef[jdex[i]-1];
+            ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[i]-1]);
+            av = (currentCount * av + d) / (currentCount + multiCoef[jdex[i]-1]);
+            currentCount += multiCoef[jdex[i]-1];
+        }
+#ifdef RF_DEBUG
+        Rprintf("\n multiCoef[%d] = %d\n",
+                i, multiCoef[jdex[i]-1]);
+#endif
     }
     avnode[0] = av;
     nodepopBLB[0] = currentCount;
     
     
-//#ifdef RF_DEBUG
-//    Rprintf("sum of Mi=%d, 5 * nsample = %d\n",
-//            currentCount, 5*nsample);
-//#endif
+#ifdef RF_DEBUG
+    Rprintf("\n sum of Mi=%d, nsample = %d, av = %f\n",
+            currentCount, nsample, av);
+#endif
     
     /* start main loop */
     for (k = 0; k < nrnodes - 2; ++k) {
@@ -100,7 +106,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         
         findBestSplit(x, jdex, y, mdim, nsample, ndstart, ndend, &msplit,
                       &decsplit, &ubest, &ndendl, &jstat, mtry, sumnode,
-                      nodecnt, nodecntBLB, cat);
+                      nodecnt, nodecntBLB, cat, multiCoef);
 //#ifdef RF_DEBUG
 //        Rprintf(" after findBestSplit: ndstart=%d, ndend=%d, jstat=%d, decsplit=%f, msplit=%d\n",
 //                ndstart, ndend, jstat, decsplit, msplit);
@@ -132,17 +138,20 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         currentCount = 0;
         
         for (j = ndstart; j <= ndendl; ++j) {
-            d = y[jdex[j]-1]* multiCoef[jdex[j]-1];
-            ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[j]-1]);
-            av = (currentCount * av + d) / (currentCount + multiCoef[jdex[j]-1]);
-            currentCount += multiCoef[jdex[j]-1];
+            if( multiCoef[jdex[j]-1] != 0){
+                d = y[jdex[j]-1]* multiCoef[jdex[j]-1];
+                ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[j]-1]);
+                av = (currentCount * av + d) / (currentCount + multiCoef[jdex[j]-1]);
+                currentCount += multiCoef[jdex[j]-1];
+            }
+            
+//#ifdef RF_DEBUG
+//            Rprintf("av = %f , multiCoef[jdex[j]-1] = %d\n",
+//                    av,multiCoef[jdex[j]-1]);
+//#endif
         }
         avnode[ncur+1] = av;
         nodepopBLB[ncur + 1] = currentCount;
-//#ifdef RF_DEBUG
-//        Rprintf("\n nodepopBLB[%d] = %d \n",
-//                ncur + 1,nodepopBLB[ncur + 1]);
-//#endif
         nodestatus[ncur+1] = NODE_TOSPLIT;
         if (nodepop[ncur + 1] <= nthsize) {
             nodestatus[ncur + 1] = NODE_TERMINAL;
@@ -154,17 +163,19 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         ss = 0.0;
         currentCount = 0;
         for (j = ndendl + 1; j <= ndend; ++j) {
-            d = y[jdex[j]-1]* multiCoef[jdex[j]-1];
-            ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[j]-1]);
-            av = (currentCount * av + d) / (currentCount + multiCoef[jdex[j]-1]);
-            currentCount += multiCoef[jdex[j]-1];
+            if( multiCoef[jdex[j]-1] != 0){
+                d = y[jdex[j]-1]* multiCoef[jdex[j]-1];
+                ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[j]-1]);
+                av = (currentCount * av + d) / (currentCount + multiCoef[jdex[j]-1]);
+                currentCount += multiCoef[jdex[j]-1];
+            }
+//#ifdef RF_DEBUG
+//            Rprintf("av = %f \n",
+//                    av);
+//#endif
         }
         avnode[ncur + 2] = av;
         nodepopBLB[ncur + 2] = currentCount;
-//#ifdef RF_DEBUG
-//        Rprintf("\n nodepopBLB[%d] = %d \n",
-//                ncur + 2, nodepopBLB[ncur + 2]);
-//#endif
         nodestatus[ncur + 2] = NODE_TOSPLIT;
         if (nodepop[ncur + 2] <= nthsize) {
             nodestatus[ncur + 2] = NODE_TERMINAL;
@@ -175,10 +186,10 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         rDaughter[k] = ncur + 2 + 1;
         /* Augment the tree by two nodes. */
         ncur += 2;
-#ifdef RF_DEBUG
-        Rprintf(" after split: ldaughter=%d, rdaughter=%d, ncur=%d\n",
-                lDaughter[k], rDaughter[k], ncur);
-#endif
+//#ifdef RF_DEBUG
+//        Rprintf(" after split: ldaughter=%d, rdaughter=%d, ncur=%d\n",
+//                lDaughter[k], rDaughter[k], ncur);
+//#endif
         
     }
     *treeSize = nrnodes;
@@ -198,19 +209,20 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
 void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
                    int ndstart, int ndend, int *msplit, double *decsplit,
                    double *ubest, int *ndendl, int *jstat, int mtry,
-                   double sumnode, int nodecnt, int nodecntBLB, int *cat) {
-    int last, ncat[MAX_CAT], icat[MAX_CAT], lc, nl, nr, npopl, npopr;
+                   double sumnode, int nodecnt, int nodecntBLB, int *cat, int *multiCoef) {
+    int last, ncat[MAX_CAT], icat[MAX_CAT], lc, nl, nr, npopl, npopr, npoplBLB, npoprBLB;
     int i, j, kv, l, *mind, *ncase;
-    double *xt, *ut, *v, *yl, sumcat[MAX_CAT], avcat[MAX_CAT], tavcat[MAX_CAT], ubestt;
+    double *xt, *ut, *v, *yl, sumcat[MAX_CAT], avcat[MAX_CAT], tavcat[MAX_CAT], ubestt, *multiCoefCur;
     double crit, critmax, critvar, suml, sumr, d, critParent;
     
     /* task: look into value of "nsample" */
-    ut = (double *) Calloc(nsample, double);
-    xt = (double *) Calloc(nsample, double);
-    v  = (double *) Calloc(nsample, double);
-    yl = (double *) Calloc(nsample, double);
-    mind  = (int *) Calloc(mdim, int);
-    ncase = (int *) Calloc(nsample, int);
+    ut              = (double *) Calloc(nsample, double);
+    xt              = (double *) Calloc(nsample, double);
+    multiCoefCur    = (double *) Calloc(nsample, double);
+    v               = (double *) Calloc(nsample, double);
+    yl              = (double *) Calloc(nsample, double);
+    mind            = (int *) Calloc(mdim, int);
+    ncase           = (int *) Calloc(nsample, int);
     zeroDouble(avcat, MAX_CAT);
     zeroDouble(tavcat, MAX_CAT);
     
@@ -220,6 +232,11 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
     critmax = 0.0;
     ubestt = 0.0;
     for (i=0; i < mdim; ++i) mind[i] = i;
+    
+    /* populate the multiCoefCur: multiCoef for current node */
+    for(j = ndstart; j <= ndend; ++j) {
+      multiCoefCur[j] = multiCoef[jdex[j] - 1];
+    }
     
     last = mdim - 1;
     for (i = 0; i < mtry; ++i) {
@@ -267,18 +284,22 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
         suml = 0.0;
         sumr = sumnode;
         npopl = 0;
+        npoplBLB = 0;
         npopr = nodecnt;
+        npoprBLB = nodecntBLB;
         crit = 0.0;
         /* Search through the "gaps" in the x-variable. */
         for (j = ndstart; j <= ndend - 1; ++j) {
-            d = yl[ncase[j] - 1];
+            d = yl[ncase[j] - 1] * multiCoefCur[ncase[j] - 1];
             suml += d;
             sumr -= d;
             npopl++;
+            npoplBLB += multiCoefCur[ncase[j] - 1];
             npopr--;
+            npoprBLB -= multiCoefCur[ncase[j] - 1];
             if (v[j] < v[j+1]) {
                 /* task: suml, sumr, calcualted need to be changed??? */
-                crit = (suml * suml / npopl) + (sumr * sumr / npopr) -
+                crit = (suml * suml / npoplBLB) + (sumr * sumr / npoprBLB) -
                 critParent;
                 if (crit > critvar) {
                     ubestt = (v[j] + v[j+1]) / 2.0;

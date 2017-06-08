@@ -53,7 +53,7 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
   
   int *in, *nind, *nodex, *nodexts;
   
-  int sampling_factor = 5;
+  int sampling_factor = 1;
   
   nsample = xdim[0];
   mdim = xdim[1];
