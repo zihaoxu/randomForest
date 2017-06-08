@@ -58,12 +58,14 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
     av = 0.0;
     ss = 0.0;
     currentCount = 0;
+    double frac = 0;
     for (i = 0; i < nsample; ++i) {
         if (multiCoef[jdex[i]-1] != 0){
             d = y[jdex[i] - 1] * multiCoef[jdex[i]-1];
             ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[i]-1]);
             av = (currentCount * av + d) / (currentCount + multiCoef[jdex[i]-1]);
             currentCount += multiCoef[jdex[i]-1];
+            frac ++;
         }
 #ifdef RF_DEBUG
         Rprintf("\n multiCoef[%d] = %d\n",
@@ -75,8 +77,8 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
     
     
 #ifdef RF_DEBUG
-    Rprintf("\n sum of Mi=%d, nsample = %d, av = %f\n",
-            currentCount, nsample, av);
+    Rprintf("\n sum of Mi=%d, nsample = %d, av = %f\n, frac = %f\n",
+            currentCount, nsample, av, frac/currentCount);
 #endif
     
     /* start main loop */
