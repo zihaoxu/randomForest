@@ -58,28 +58,26 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
     av = 0.0;
     ss = 0.0;
     currentCount = 0;
-    double frac = 0;
     for (i = 0; i < nsample; ++i) {
         if (multiCoef[jdex[i]-1] != 0){
             d = y[jdex[i] - 1] * multiCoef[jdex[i]-1];
             ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[i]-1]);
             av = (currentCount * av + d) / (currentCount + multiCoef[jdex[i]-1]);
             currentCount += multiCoef[jdex[i]-1];
-            frac ++;
+//#ifdef RF_DEBUG
+//            Rprintf("\n multiCoef[%d] = %d, y[%d] = %.3f, av = %.3f, d = %.3f, currentCount = %d\n",
+//                    i, multiCoef[jdex[i]-1], i, y[jdex[i] - 1], av, d, currentCount);
+//#endif
         }
-#ifdef RF_DEBUG
-        Rprintf("\n multiCoef[%d] = %d\n",
-                i, multiCoef[jdex[i]-1]);
-#endif
     }
     avnode[0] = av;
     nodepopBLB[0] = currentCount;
     
     
-#ifdef RF_DEBUG
-    Rprintf("\n sum of Mi=%d, nsample = %d, av = %f\n, frac = %f\n",
-            currentCount, nsample, av, frac/currentCount);
-#endif
+//#ifdef RF_DEBUG
+//    Rprintf("\n sum of Mi=%d, nsample = %d, av = %f\n\n",
+//            currentCount, nsample, av);
+//#endif
     
     /* start main loop */
     for (k = 0; k < nrnodes - 2; ++k) {
@@ -147,10 +145,6 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
                 currentCount += multiCoef[jdex[j]-1];
             }
             
-//#ifdef RF_DEBUG
-//            Rprintf("av = %f , multiCoef[jdex[j]-1] = %d\n",
-//                    av,multiCoef[jdex[j]-1]);
-//#endif
         }
         avnode[ncur+1] = av;
         nodepopBLB[ncur + 1] = currentCount;
@@ -158,6 +152,10 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         if (nodepop[ncur + 1] <= nthsize) {
             nodestatus[ncur + 1] = NODE_TERMINAL;
         }
+#ifdef RF_DEBUG
+        Rprintf("nodepop[%d] = %d , nodepopBLB[%d] = %d, nthsize = %d\n",
+                ncur + 1, nodepop[ncur + 1], ncur + 1, nodepopBLB[ncur + 1], nthsize);
+#endif
         
         /* compute mean and sum of squares for the right daughter node */
         /* task: need to recalculated */
@@ -201,6 +199,10 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
             nodestatus[k] = NODE_TERMINAL;
         }
     }
+//#ifdef RF_DEBUG
+//       Rprintf(" ncur = %d\n",
+//               ncur);
+//#endif
     Free(nodestart);
     Free(jdex);
     Free(nodepop);
