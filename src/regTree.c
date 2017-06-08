@@ -25,17 +25,18 @@
 #include <R.h>
 #include "rf.h"
 
-void regTree(double *x, double *y, int *multiCoef, int mdim, int nresample, int *lDaughter,
+void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *lDaughter,
              int *rDaughter,
              double *upper, double *avnode, int *nodestatus, int nrnodes,
              int *treeSize, int nthsize, int mtry, int *mbest, int *cat,
              double *tgini, int *varUsed) {
-    int i, j, k, m, ncur, *jdex, *nodestart, *nodepop;
+    int i, j, k, m, ncur, *jdex, *nodestart, *nodepop, *nodepopBLB, currentCount;
     int ndstart, ndend, ndendl, nodecnt, jstat, msplit;
     double d, ss, av, decsplit, ubest, sumnode;
     
     nodestart = (int *) Calloc(nrnodes, int);
     nodepop   = (int *) Calloc(nrnodes, int);
+    nodepopBLB= (int *) Calloc(nrnodes, int);
     
     /* initialize some arrays for the tree */
     zeroInt(nodestatus, nrnodes);
@@ -43,24 +44,32 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nresample, int 
     zeroInt(nodepop, nrnodes);
     zeroDouble(avnode, nrnodes);
     
-    jdex = (int *) Calloc(nresample, int);
-    for (i = 1; i <= nresample; ++i) jdex[i-1] = i;
+    jdex = (int *) Calloc(nsample, int);
+    for (i = 1; i <= nsample; ++i) jdex[i-1] = i;
     
     ncur = 0;
     nodestart[0] = 0;
-    nodepop[0] = nresample;
+    nodepop[0] = nsample;
     nodestatus[0] = NODE_TOSPLIT;
     
     /* compute mean and sum of squares for Y */
-    /* task: plug in Mi and modify value of nresample to b */
+    /* task: plug in Mi and modify value of nsample to b */
     av = 0.0;
     ss = 0.0;
-    for (i = 0; i < nresample; ++i) {
-        d = y[jdex[i] - 1];
-        ss += i * (av - d) * (av - d) / (i + 1);
-        av = (i * av + d) / (i + 1);
+    currentCount = 0;
+    for (i = 0; i < nsample; ++i) {
+        d = y[jdex[i] - 1] * multiCoef[jdex[i]-1];
+        ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[i]-1]);
+        av = (currentCount * av + d) / (currentCount + multiCoef[jdex[i]-1]);
+        currentCount += multiCoef[jdex[i]-1];
     }
     avnode[0] = av;
+    
+    
+#ifdef RF_DEBUG
+    Rprintf("sum of Mi=%d, 5 * nsample = %d\n",
+            currentCount, 5*nsample);
+#endif
     
     /* start main loop */
     for (k = 0; k < nrnodes - 2; ++k) {
@@ -86,7 +95,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nresample, int 
                 ndstart, ndend, jstat, decsplit);
 #endif
         
-        findBestSplit(x, jdex, y, mdim, nresample, ndstart, ndend, &msplit,
+        findBestSplit(x, jdex, y, mdim, nsample, ndstart, ndend, &msplit,
                       &decsplit, &ubest, &ndendl, &jstat, mtry, sumnode,
                       nodecnt, cat);
 #ifdef RF_DEBUG
@@ -105,6 +114,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nresample, int 
         upper[k] = ubest;
         tgini[msplit - 1] += decsplit;
         nodestatus[k] = NODE_INTERIOR;
+
         
         /* leftnode no.= ncur+1, rightnode no. = ncur+2. */
         nodepop[ncur + 1] = ndendl - ndstart + 1;
@@ -116,11 +126,13 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nresample, int 
         /* task: need to recalculated */
         av = 0.0;
         ss = 0.0;
+        currentCount = 0;
+        
         for (j = ndstart; j <= ndendl; ++j) {
-            d = y[jdex[j]-1];
-            m = j - ndstart;
-            ss += m * (av - d) * (av - d) / (m + 1);
-            av = (m * av + d) / (m+1);
+            d = y[jdex[j]-1]* multiCoef[jdex[j]-1];
+            ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[j]-1]);
+            av = (currentCount * av + d) / (currentCount + multiCoef[jdex[j]-1]);
+            currentCount += multiCoef[jdex[j]-1];
         }
         avnode[ncur+1] = av;
         nodestatus[ncur+1] = NODE_TOSPLIT;
@@ -132,11 +144,12 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nresample, int 
         /* task: need to recalculated */
         av = 0.0;
         ss = 0.0;
+        currentCount = 0;
         for (j = ndendl + 1; j <= ndend; ++j) {
-            d = y[jdex[j]-1];
-            m = j - (ndendl + 1);
-            ss += m * (av - d) * (av - d) / (m + 1);
-            av = (m * av + d) / (m + 1);
+            d = y[jdex[j]-1]* multiCoef[jdex[j]-1];
+            ss += currentCount * (av - d) * (av - d) / (currentCount + multiCoef[jdex[j]-1]);
+            av = (currentCount * av + d) / (currentCount + multiCoef[jdex[j]-1]);
+            currentCount += multiCoef[jdex[j]-1];
         }
         avnode[ncur + 2] = av;
         nodestatus[ncur + 2] = NODE_TOSPLIT;
@@ -165,10 +178,11 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nresample, int 
     Free(nodestart);
     Free(jdex);
     Free(nodepop);
+    Free(nodepopBLB);
 }
 
 /*--------------------------------------------------------------*/
-void findBestSplit(double *x, int *jdex, double *y, int mdim, int nresample,
+void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
                    int ndstart, int ndend, int *msplit, double *decsplit,
                    double *ubest, int *ndendl, int *jstat, int mtry,
                    double sumnode, int nodecnt, int *cat) {
@@ -177,13 +191,13 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nresample,
     double *xt, *ut, *v, *yl, sumcat[MAX_CAT], avcat[MAX_CAT], tavcat[MAX_CAT], ubestt;
     double crit, critmax, critvar, suml, sumr, d, critParent;
     
-    /* task: look into value of "nresample" */
-    ut = (double *) Calloc(nresample, double);
-    xt = (double *) Calloc(nresample, double);
-    v  = (double *) Calloc(nresample, double);
-    yl = (double *) Calloc(nresample, double);
+    /* task: look into value of "nsample" */
+    ut = (double *) Calloc(nsample, double);
+    xt = (double *) Calloc(nsample, double);
+    v  = (double *) Calloc(nsample, double);
+    yl = (double *) Calloc(nsample, double);
     mind  = (int *) Calloc(mdim, int);
-    ncase = (int *) Calloc(nresample, int);
+    ncase = (int *) Calloc(nsample, int);
     zeroDouble(avcat, MAX_CAT);
     zeroDouble(tavcat, MAX_CAT);
     
@@ -223,14 +237,14 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nresample,
                 avcat[j] = ncat[j] ? sumcat[j] / ncat[j] : 0.0;
             }
             /* Make the category mean the `pseudo' X data. */
-            for (j = 0; j < nresample; ++j) {
+            for (j = 0; j < nsample; ++j) {
                 xt[j] = avcat[(int) x[kv + (jdex[j] - 1) * mdim] - 1];
                 yl[j] = y[jdex[j] - 1];
             }
         }
         /* copy the x data in this node. */
         for (j = ndstart; j <= ndend; ++j) v[j] = xt[j];
-        for (j = 1; j <= nresample; ++j) ncase[j - 1] = j;
+        for (j = 1; j <= nsample; ++j) ncase[j - 1] = j;
         R_qsort_I(v, ncase, ndstart + 1, ndend + 1);
         if (v[ndstart] >= v[ndend]) continue;
         /* ncase(n)=case number of v nth from bottom */
@@ -286,7 +300,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nresample,
         nr = *ndendl + 1;
         for (j = ndstart; j <= ndend; ++j) {
             if (ut[j] > *ubest) {
-                if (nr >= nresample) break;
+                if (nr >= nsample) break;
                 nr++;
                 ncase[nr - 1] = jdex[j];
             }
@@ -312,7 +326,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nresample,
 }
 
 /*====================================================================*/
-void predictRegTree(double *x, int nresample, int mdim,
+void predictRegTree(double *x, int nsample, int mdim,
                     int *lDaughter, int *rDaughter, int *nodestatus,
                     double *ypred, double *split, double *nodepred,
                     int *splitVar, int treeSize, int *cat, int maxcat,
@@ -338,7 +352,7 @@ void predictRegTree(double *x, int nresample, int mdim,
         }
     }
     
-    for (i = 0; i < nresample; ++i) {
+    for (i = 0; i < nsample; ++i) {
         k = 0;
         while (nodestatus[k] != NODE_TERMINAL) { /* go down the tree */
             m = splitVar[k] - 1;
