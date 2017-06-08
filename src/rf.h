@@ -14,7 +14,7 @@ GNU General Public License for more details.
 #ifndef RF_H
 #define RF_H
 
-#define RF_DEBUG
+//#define RF_DEBUG
 
 /* test if the bit at position pos is turned on */
 #define isBitOn(x,pos) (((x) & (1 << (pos))) > 0)
@@ -51,7 +51,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
 void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample, 
                    int ndstart, int ndend, int *msplit, double *decsplit, 
                    double *ubest, int *ndendl, int *jstat, int mtry,
-                   double sumnode, int nodecnt, int *cat);
+                   double sumnode, int nodecnt, int nodecntBLB, int *cat);
 
 void predictRegTree(double *x, int nsample, int mdim, 
                     int *lDaughter, int *rDaughter, int *nodestatus, 

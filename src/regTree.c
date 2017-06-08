@@ -31,7 +31,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
              int *treeSize, int nthsize, int mtry, int *mbest, int *cat,
              double *tgini, int *varUsed) {
     int i, j, k, m, ncur, *jdex, *nodestart, *nodepop, *nodepopBLB, currentCount;
-    int ndstart, ndend, ndendl, nodecnt, jstat, msplit;
+    int ndstart, ndend, ndendl, nodecnt, jstat, msplit, nodecntBLB;
     double d, ss, av, decsplit, ubest, sumnode;
     
     nodestart = (int *) Calloc(nrnodes, int);
@@ -42,6 +42,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
     zeroInt(nodestatus, nrnodes);
     zeroInt(nodestart, nrnodes);
     zeroInt(nodepop, nrnodes);
+    zeroInt(nodepopBLB, nrnodes);
     zeroDouble(avnode, nrnodes);
     
     jdex = (int *) Calloc(nsample, int);
@@ -64,12 +65,13 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         currentCount += multiCoef[jdex[i]-1];
     }
     avnode[0] = av;
+    nodepopBLB[0] = currentCount;
     
     
-#ifdef RF_DEBUG
-    Rprintf("sum of Mi=%d, 5 * nsample = %d\n",
-            currentCount, 5*nsample);
-#endif
+//#ifdef RF_DEBUG
+//    Rprintf("sum of Mi=%d, 5 * nsample = %d\n",
+//            currentCount, 5*nsample);
+//#endif
     
     /* start main loop */
     for (k = 0; k < nrnodes - 2; ++k) {
@@ -77,32 +79,33 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         /* skip if the node is not to be split */
         if (nodestatus[k] != NODE_TOSPLIT) continue;
         
-#ifdef RF_DEBUG
-        Rprintf("regTree: k=%d, av=%f, ss=%f\n", k, av, ss);
-#endif
+//#ifdef RF_DEBUG
+//        Rprintf("regTree: k=%d, av=%f, ss=%f\n", k, av, ss);
+//#endif
         
         /* initialize for next call to findbestsplit */
         /* task: need to look into how nodestart and nodepop are calculated */
         ndstart = nodestart[k];
         ndend = ndstart + nodepop[k] - 1;
         nodecnt = nodepop[k];
+        nodecntBLB = nodepopBLB[k];
         sumnode = nodecnt * avnode[k];
         jstat = 0;
         decsplit = 0.0;
         
-#ifdef RF_DEBUG
-        Rprintf("before findBestSplit: ndstart=%d, ndend=%d, jstat=%d, decsplit=%f\n",
-                ndstart, ndend, jstat, decsplit);
-#endif
+//#ifdef RF_DEBUG
+//        Rprintf("before findBestSplit: ndstart=%d, ndend=%d, jstat=%d, decsplit=%f\n",
+//                ndstart, ndend, jstat, decsplit);
+//#endif
         
         findBestSplit(x, jdex, y, mdim, nsample, ndstart, ndend, &msplit,
                       &decsplit, &ubest, &ndendl, &jstat, mtry, sumnode,
-                      nodecnt, cat);
-#ifdef RF_DEBUG
-        Rprintf(" after findBestSplit: ndstart=%d, ndend=%d, jstat=%d, decsplit=%f, msplit=%d\n",
-                ndstart, ndend, jstat, decsplit, msplit);
-        
-#endif
+                      nodecnt, nodecntBLB, cat);
+//#ifdef RF_DEBUG
+//        Rprintf(" after findBestSplit: ndstart=%d, ndend=%d, jstat=%d, decsplit=%f, msplit=%d\n",
+//                ndstart, ndend, jstat, decsplit, msplit);
+//        
+//#endif
         if (jstat == 1) {
             /* Node is terminal: Mark it as such and move on to the next. */
             nodestatus[k] = NODE_TERMINAL;
@@ -135,6 +138,11 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
             currentCount += multiCoef[jdex[j]-1];
         }
         avnode[ncur+1] = av;
+        nodepopBLB[ncur + 1] = currentCount;
+//#ifdef RF_DEBUG
+//        Rprintf("\n nodepopBLB[%d] = %d \n",
+//                ncur + 1,nodepopBLB[ncur + 1]);
+//#endif
         nodestatus[ncur+1] = NODE_TOSPLIT;
         if (nodepop[ncur + 1] <= nthsize) {
             nodestatus[ncur + 1] = NODE_TERMINAL;
@@ -152,6 +160,11 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
             currentCount += multiCoef[jdex[j]-1];
         }
         avnode[ncur + 2] = av;
+        nodepopBLB[ncur + 2] = currentCount;
+//#ifdef RF_DEBUG
+//        Rprintf("\n nodepopBLB[%d] = %d \n",
+//                ncur + 2, nodepopBLB[ncur + 2]);
+//#endif
         nodestatus[ncur + 2] = NODE_TOSPLIT;
         if (nodepop[ncur + 2] <= nthsize) {
             nodestatus[ncur + 2] = NODE_TERMINAL;
@@ -185,7 +198,7 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
 void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
                    int ndstart, int ndend, int *msplit, double *decsplit,
                    double *ubest, int *ndendl, int *jstat, int mtry,
-                   double sumnode, int nodecnt, int *cat) {
+                   double sumnode, int nodecnt, int nodecntBLB, int *cat) {
     int last, ncat[MAX_CAT], icat[MAX_CAT], lc, nl, nr, npopl, npopr;
     int i, j, kv, l, *mind, *ncase;
     double *xt, *ut, *v, *yl, sumcat[MAX_CAT], avcat[MAX_CAT], tavcat[MAX_CAT], ubestt;
@@ -250,7 +263,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
         /* ncase(n)=case number of v nth from bottom */
         /* Start from the right and search to the left. */
         /* task: need to verify whether the introduction of Mi will change the following calculation */
-        critParent = sumnode * sumnode / nodecnt;
+        critParent = sumnode * sumnode / nodecntBLB;
         suml = 0.0;
         sumr = sumnode;
         npopl = 0;
