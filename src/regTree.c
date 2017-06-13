@@ -303,11 +303,14 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
             npopr--;
             npoprBLB -= multiCoefCur[ncase[j] - 1];
             
-            tempj = j+1;
             k=1;
-            if(multiCoefCur[ncase[tempj]-1] == 0){k++;}
-            
-            
+            /* skipping any 0s in multiCorf */
+            for(tempj = j+1; tempj <= ndend; tempj++){
+                if(multiCoefCur[ncase[tempj]-1] == 0){
+                  k++;
+                }else{break;}
+            }
+
             if (v[j] < v[j+k]) {
                 crit = (suml * suml / npoplBLB) + (sumr * sumr / npoprBLB) -
                 critParent;
