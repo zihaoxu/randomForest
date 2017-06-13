@@ -216,7 +216,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
                    double *ubest, int *ndendl, int *jstat, int mtry,
                    double sumnode, int nodecnt, int nodecntBLB, int *cat, int *multiCoef) {
     int last, ncat[MAX_CAT], icat[MAX_CAT], lc, nl, nr, npopl, npopr, npoplBLB, npoprBLB;
-    int i, j, kv, l, *mind, *ncase;
+    int i, j, k, tempj, kv, l, *mind, *ncase;
     double *xt, *ut, *v, *yl, sumcat[MAX_CAT], avcat[MAX_CAT], tavcat[MAX_CAT], ubestt, *multiCoefCur;
     double crit, critmax, critvar, suml, sumr, d, critParent;
     
@@ -302,11 +302,17 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
             npoplBLB += multiCoefCur[ncase[j] - 1];
             npopr--;
             npoprBLB -= multiCoefCur[ncase[j] - 1];
-            if (v[j] < v[j+1]) {
+            
+            tempj = j+1;
+            k=1;
+            if(multiCoefCur[ncase[tempj]-1] == 0){k++;}
+            
+            
+            if (v[j] < v[j+k]) {
                 crit = (suml * suml / npoplBLB) + (sumr * sumr / npoprBLB) -
                 critParent;
                 if (crit > critvar) {
-                    ubestt = (v[j] + v[j+1]) / 2.0;
+                    ubestt = (v[j] + v[j+k]) / 2.0;
                     critvar = crit;
                 }
             }
