@@ -151,11 +151,12 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
         nodestatus[ncur+1] = NODE_TOSPLIT;
         if (nodepop[ncur + 1] <= nthsize) {
             nodestatus[ncur + 1] = NODE_TERMINAL;
+          #ifdef RF_DEBUG
+                  Rprintf("nodepop[%d] = %d , nodepopBLB[%d] = %d\n",
+                          ncur + 1, nodepop[ncur + 1], ncur + 1, nodepopBLB[ncur + 1]);
+          #endif
         }
-#ifdef RF_DEBUG
-        Rprintf("nodepop[%d] = %d , nodepopBLB[%d] = %d, nthsize = %d\n",
-                ncur + 1, nodepop[ncur + 1], ncur + 1, nodepopBLB[ncur + 1], nthsize);
-#endif
+
         
         /* compute mean and sum of squares for the right daughter node */
         /* task: need to recalculated */
@@ -199,10 +200,10 @@ void regTree(double *x, double *y, int *multiCoef, int mdim, int nsample, int *l
             nodestatus[k] = NODE_TERMINAL;
         }
     }
-//#ifdef RF_DEBUG
-//       Rprintf(" ncur = %d\n",
-//               ncur);
-//#endif
+#ifdef RF_DEBUG
+       Rprintf(" ncur = %d, treeSize = %d\n",
+               ncur, *treeSize);
+#endif
     Free(nodestart);
     Free(jdex);
     Free(nodepop);
@@ -302,7 +303,6 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
             npopr--;
             npoprBLB -= multiCoefCur[ncase[j] - 1];
             if (v[j] < v[j+1]) {
-                /* task: suml, sumr, calcualted need to be changed??? */
                 crit = (suml * suml / npoplBLB) + (sumr * sumr / npoprBLB) -
                 critParent;
                 if (crit > critvar) {

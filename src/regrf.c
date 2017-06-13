@@ -18,7 +18,7 @@ void simpleLinReg(int nsample, double *x, double *y, double *coef,
 
 
 void regRF(double *x, double *y, int *xdim, int *sampsize,
-           int *nthsize, int *nrnodes, int *nTree, int *mtry, int *imp,
+           int *nthsize, int *nrnodes, int *nTree, int *s, int *mtry, int *imp,
            int *cat, int *maxcat, int *jprint, int *doProx, int *oobprox,
            int *biasCorr, double *yptr, double *errimp, double *impmat,
            double *impSD, double *prox, int *treeSize, int *nodestatus,
@@ -53,7 +53,7 @@ void regRF(double *x, double *y, int *xdim, int *sampsize,
   
   int *in, *nind, *nodex, *nodexts;
   
-  int sampling_factor = 1;
+  int sampling_factor = *s;
   
   nsample = xdim[0];
   mdim = xdim[1];
