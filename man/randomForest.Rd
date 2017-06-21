@@ -14,6 +14,7 @@
 \usage{
 \method{randomForest}{formula}(formula, data=NULL, ..., subset, na.action=na.fail)
 \method{randomForest}{default}(x, y=NULL,  xtest=NULL, ytest=NULL, ntree=500,
+             sampling_factor = 1,
              mtry=if (!is.null(y) && !is.factor(y))
              max(floor(ncol(x)/3), 1) else floor(sqrt(ncol(x))),
              replace=TRUE, classwt=NULL, cutoff, strata,
@@ -46,7 +47,9 @@
   \item{ytest}{response for the test set.}
   \item{ntree}{Number of trees to grow.  This should not be set to too
     small a number, to ensure that every input row gets predicted at
-    least a few times. }
+    least a few times.}
+  \item{sampling_factor}{The re-scaling factor for each subsample for 
+  its size to reach, approximately, the original sample size, n.}
   \item{mtry}{Number of variables randomly sampled as candidates at each
     split.  Note that the default values are different for
     classification (sqrt(p) where p is number of variables in \code{x})
@@ -129,6 +132,8 @@
     measures, the [i,j] element of which is the importance of i-th
     variable on the j-th case. \code{NULL} if \code{localImp=FALSE}.}
   \item{ntree}{number of trees grown.}
+  \item{sampling_factor}{rescaling factor to rescale subsamples to size
+  of n in Monte Carlo resampling.}
   \item{mtry}{number of predictors sampled for spliting at each node.}
   \item{forest}{(a list that contains the entire forest; \code{NULL} if
     \code{randomForest} is run in unsupervised mode or if
