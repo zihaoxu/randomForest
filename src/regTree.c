@@ -215,7 +215,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
                    int ndstart, int ndend, int *msplit, double *decsplit,
                    double *ubest, int *ndendl, int *jstat, int mtry,
                    double sumnode, int nodecnt, int nodecntBLB, int *cat, int *multiCoef) {
-    int last, ncat[MAX_CAT], icat[MAX_CAT], lc, nl, nr, npopl, npopr, npoplBLB, npoprBLB;
+    int last, ncat[MAX_CAT], icat[MAX_CAT], lc, nl, nr, npoplBLB, npoprBLB;
     int i, j, k, tempj, kv, l, *mind, *ncase;
     double *xt, *ut, *v, *yl, sumcat[MAX_CAT], avcat[MAX_CAT], tavcat[MAX_CAT], ubestt, *multiCoefCur;
     double crit, critmax, critvar, suml, sumr, d, critParent;
@@ -288,9 +288,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
         critParent = sumnode * sumnode / nodecntBLB;
         suml = 0.0;
         sumr = sumnode;
-        npopl = 0;
         npoplBLB = 0;
-        npopr = nodecnt;
         npoprBLB = nodecntBLB;
         crit = 0.0;
         /* Search through the "gaps" in the x-variable. */
@@ -298,9 +296,7 @@ void findBestSplit(double *x, int *jdex, double *y, int mdim, int nsample,
             d = yl[ncase[j] - 1] * multiCoefCur[ncase[j] - 1];
             suml += d;
             sumr -= d;
-            npopl++;
             npoplBLB += multiCoefCur[ncase[j] - 1];
-            npopr--;
             npoprBLB -= multiCoefCur[ncase[j] - 1];
             
             k=1;
